@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tesseract Animation</title>
+    <style>
+        body { 
+            margin: 0; 
+            background-color: black; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            overflow: hidden;
+        }
+        canvas { 
+            border: 1px solid black; 
+        }
+    </style>
+</head>
+<body>
+    <canvas id="tesseractCanvas"></canvas>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('tesseractCanvas');
+            const context = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const angleSpeed = 0.01;
+            let angle = 0;
+
+            const project = (x, y, z, w) => {
+                const distance = 2;
+                const scale = canvas.width / 8 / (distance + w);
+                const x2D = x * scale + canvas.width / 2;
+                const y2D = y * scale + canvas.height / 2;
+                return { x: x2D, y: y2D };
+            };
+
+            const drawLine = (a, b) => {
+                const { x: ax, y: ay } = project(...a);
+                const { x: bx, y: by } = project(...b);
+                context.beginPath();
+                context.moveTo(ax, ay);
+                context.lineTo(bx, by);
+                context.strokeStyle = 'rgba(0, 191, 255, 0.8)'; // Glowing blue color
+                context.lineWidth = 2;
+                context.shadowColor = 'rgba(0, 191, 255, 1)';
+                context.shadowBlur = 20;
+                context.stroke();
+            };
+
+            const vertices = [
+                [-1, -1, -1, -1], [1, -1, -1, -1], [1, 1, -1, -1], [-1, 1, -1, -1],
+                [-1, -1, 1, -1], [1, -1, 1, -1], [1, 1, 1, -1], [-1, 1, 1, -1],
+                [-1, -1, -1, 1], [1, -1, -1, 1], [1, 1, -1, 1], [-1, 1, -1, 1],
+                [-1, -1, 1, 1], [1, -1, 1, 1], [1, 1, 1, 1], [-1, 1, 1, 1]
+            ];
+
+            const edges = [
+                [0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4],
+                [8, 9], [9, 10], [10, 11], [11, 8], [12, 13], [13, 14], [14, 15], [15, 12],
+                [0, 4], [1, 5], [2, 6], [3, 7], [8, 12], [9, 13], [10, 14], [11, 15]
+            ];
+
+            const animate = () => {
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                const cosAngle = Math.cos(angle);
+                const sinAngle = Math.sin(angle);
+
+                const rotatedVertices = vertices.map(vertex => {
+                    let [x, y, z, w] = vertex;
+                    [x, z] = [cosAngle * x - sinAngle * z, sinAngle * x + cosAngle * z];
+                    [y, w] = [cosAngle * y - sinAngle * w, sinAngle * y + cosAngle * w];
+                    return [x, y, z, w];
+                });
+
+                edges.forEach(edge => {
+                    const a = rotatedVertices[edge[0]];
+                    const b = rotatedVertices[edge[1]];
+                    drawLine(a, b);
+                });
+
+                angle += angleSpeed;
+                requestAnimationFrame(animate);
+            };
+
+            animate();
+        });
+    </script>
+</body>
+</html>
